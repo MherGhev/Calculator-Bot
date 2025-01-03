@@ -2,39 +2,64 @@ class Evaluator {
 
     getParameters(expression) {
         const parameters = this.getStringParameters(expression);
-        console.log("string params: ", parameters)
+
         this.evaluateParameters(parameters);
-        console.log("after: ", parameters)
+
+        this.validateParameters(parameters);
 
         return parameters;
     }
 
-    evaluateSimpleExpression(expression) {
+    getStringParameters(expression) {
+        const atkMatch = expression.match(/atk3?\s+([^defmod]+)/);
+        const defMatch = expression.match(/def\s+([^mod]+)/);
+        const modMatch = expression.match(/mod\s+(.+)/);
+
+        const atk = atkMatch[1].trim() ? atkMatch[1].trim() : null;
+        const def = defMatch[1].trim() ? defMatch[1].trim() : null;
+        const mod = modMatch[1].trim() ? modMatch[1].trim() : 0;
+
+        return { atk, def, mod };
+    }
+
+    evaluateParameters(parameters) {
+        for (let key in parameters) {
+            parameters[key] = this.evaluateMathExpression(parameters[key]);
+        }
+    }
+
+    evaluateMathExpression(mathExpression) {
         try {
-            const sanitizedExpression = expression.replace(/[^0-9+\-*/().\s]/g, '');
+            const sanitizedExpression = mathExpression.replace(/[^0-9+\-*/().\s]/g, '');
 
             const result = new Function(`return ${sanitizedExpression}`)();
 
             return result;
         } catch (error) {
-            console.error("Invalid expression:", error);
+            console.log("Invalid expression:", error);
             return "Error: Invalid expression";
         }
     }
 
-    getStringParameters(expression) {
-        const atkMatch = expression.match(/atk3?\s+([^defmod]+)/); // Matches "atk" values until "def" or "mod"
-        const defMatch = expression.match(/def\s+([^mod]+)/);      // Matches "def" values until "mod"
-        const modMatch = expression.match(/mod\s+(.+)/);  
+    validateParameters(parameters) {
+        let errorMessages = [];
+        let isError = false;
+        if (parameters.atk === null || parameters.atk === "" || isNaN(parameters.atk)) {
+            errorMessages.push("Missing parameter atk");
+            isError = true;
+        }
+        if (parameters.def === null || parameters.def === "" || isNaN(parameters.def)) {
+            errorMessages.push("Missing parameter def");
+            isError = true;
+        }
 
-        const atk = atkMatch ? atkMatch[1].trim() : null;
-        const def = defMatch ? defMatch[1].trim() : null;
-        const mod = modMatch ? modMatch[1].trim() : null;
-        console.log("expression:", expression);
-        console.log("mod", modMatch)
+        if (parameters.mod === null || parameters.def === "" || isNaN(parameters.mod)) {
+            parameters.mod = 0; // mod is optional
+        }
 
-        return { atk, def, mod };
-        // improve later
+        if (isError) {
+            throw new Error(errorMessages.join("\n"));
+        }
     }
 
     calculateMode1(parameters) {
@@ -42,9 +67,6 @@ class Evaluator {
         const atk = parameters.atk;
         const def = parameters.def;
         const mod = parameters.mod ? parameters.mod : 0;
-        // check atk def not null
-
-        // evaluate simple expressions
 
         let result = 0;
         if (atk >= def)
@@ -59,7 +81,6 @@ class Evaluator {
         const atk = parameters.atk;
         const def = parameters.def;
         const mod = parameters.mod ? parameters.mod : 0;
-        // check atk def not null
         
         let result = 0;
         if (atk >= def)
@@ -79,11 +100,6 @@ class Evaluator {
         }
     }
 
-    evaluateParameters(parameters) {
-        for (let key in parameters) {
-            parameters[key] = this.evaluateSimpleExpression(parameters[key]);
-        }
-    }
 
     processExpression(expression) {
         const calculationMode = this.getCalculationMode(expression);

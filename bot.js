@@ -24,7 +24,14 @@ client.on('messageCreate', message => {
     if (message.content.startsWith("/atk")) {
         expression = message.content.slice(1);
         
-        replyMessage = evaluator.evaluate(expression)
-        message.reply(replyMessage);
+        try {
+            replyMessage = evaluator.evaluate(expression)
+            message.reply(replyMessage);
+
+        }
+        catch (err) {
+            message.reply(err.message);
+        }
+
     } 
 });
