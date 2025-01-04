@@ -11,13 +11,13 @@ class Evaluator {
     }
 
     getStringParameters(expression) {
-        const atkMatch = expression.match(/atk3?\s+([^defmod]+)/);
-        const defMatch = expression.match(/def\s+([^mod]+)/);
-        const modMatch = expression.match(/mod\s+(.+)/);
+        const atkMatch = expression.match(/atk\d?(.*?)def/);
+        const defMatch = expression.match(/def(.*?)(?:mod|$)/);
+        const modMatch = expression.match(/mod(.*)$/);
 
-        const atk = atkMatch[1].trim() ? atkMatch[1].trim() : null;
-        const def = defMatch[1].trim() ? defMatch[1].trim() : null;
-        const mod = modMatch[1].trim() ? modMatch[1].trim() : 0;
+        const atk = atkMatch ? atkMatch[1].trim() : null;
+        const def = defMatch ? defMatch[1].trim() : null;
+        const mod = modMatch ? modMatch[1].trim() : 0;
 
         return { atk, def, mod };
     }
@@ -62,6 +62,45 @@ class Evaluator {
         }
     }
 
+
+
+    evaluate(expression) {
+        const result = this.processExpression(expression);
+        return this.beautifyResult(result);
+    }
+
+    processExpression(expression) {
+        const calculationMode = this.getCalculationMode(expression);
+        const parameters = this.getParameters(expression);
+
+        const resultObject = {
+            command: expression,
+            values: `atk ${parameters.atk} def ${parameters.def} mod ${parameters.mod}`,
+            result: 0
+        }
+        if (calculationMode === 1) {
+            resultObject.result = this.calculateMode1(parameters);
+        } else if (calculationMode === 2) {
+            resultObject.result = this.calculateMode2(parameters);
+        } else {
+            throw new Error("Wrong calculation mode")
+        }
+
+        resultObject.result = this.roundToFirstDecimalPlace(resultObject.result);
+
+        return resultObject;
+    }
+
+    getCalculationMode(expression) {
+        if (expression.startsWith('atk3')) {
+            return 2;
+        } else if (expression.startsWith('atk')) {
+            return 1;
+        } else {
+            return null;
+        }
+    }
+
     calculateMode1(parameters) {
         // ATK calculation mode
         const atk = parameters.atk;
@@ -81,7 +120,7 @@ class Evaluator {
         const atk = parameters.atk;
         const def = parameters.def;
         const mod = parameters.mod ? parameters.mod : 0;
-        
+
         let result = 0;
         if (atk >= def)
             result = (atk * 3 / def) + mod;
@@ -90,45 +129,15 @@ class Evaluator {
         return result;
     }
 
-    getCalculationMode(expression) {
-        if (expression.startsWith('atk3')) {
-            return 2;
-        } else if (expression.startsWith('atk')) {
-            return 1;
-        } else {
-            return null;
-        }
-    }
-
-
-    processExpression(expression) {
-        const calculationMode = this.getCalculationMode(expression);
-        const parameters = this.getParameters(expression);
-
-        const resultObject = {
-            command: expression,
-            values: `atk ${parameters.atk} def ${parameters.def} mod ${parameters.mod}`,
-            result: 0
-        }
-        if (calculationMode === 1) {
-            resultObject.result = this.calculateMode1(parameters);
-        } else if (calculationMode === 2) {
-            resultObject.result = this.calculateMode2(parameters);
-        } else {
-            throw new Error("Wrong calculation mode")
-        }
-
-        return resultObject;
+    roundToFirstDecimalPlace(number) {
+        return Math.floor(number * 10) / 10;
     }
 
     beautifyResult(resultObject) {
         return `command: ${resultObject.command}\nvalues: ${resultObject.values}\nresult: ${resultObject.result}`;
     }
 
-    evaluate(expression) {
-        const result = this.processExpression(expression);
-        return this.beautifyResult(result);
-    }
+  
 }
 
 

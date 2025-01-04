@@ -30,6 +30,7 @@ client.on('messageCreate', message => {
 
         }
         catch (err) {
+            console.log(err)
             message.reply(err.message);
         }
 
