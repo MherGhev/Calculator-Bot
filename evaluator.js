@@ -73,20 +73,22 @@ class Evaluator {
         const calculationMode = this.getCalculationMode(expression);
         const parameters = this.getParameters(expression);
 
-        const resultObject = {
-            command: expression,
-            values: `atk ${parameters.atk} def ${parameters.def} mod ${parameters.mod}`,
-            result: 0
-        }
+        let result = 0;
         if (calculationMode === 1) {
-            resultObject.result = this.calculateMode1(parameters);
+            result = this.calculateMode1(parameters);
         } else if (calculationMode === 2) {
-            resultObject.result = this.calculateMode2(parameters);
+            result = this.calculateMode2(parameters);
         } else {
             throw new Error("Wrong calculation mode")
         }
 
-        resultObject.result = this.roundToFirstDecimalPlace(resultObject.result);
+        result = this.roundToFirstDecimalPlace(result);
+
+        const resultObject = {
+            command: expression,
+            values: `atk ${parameters.atk} def ${parameters.def} mod ${parameters.mod >= 0 ? '+' : ''}${parameters.mod}`,
+            result: `${calculationMode === 1 ? '2d10' : '3d10'}${result >= 0 ? '+' : ''}${result}`
+        }
 
         return resultObject;
     }
